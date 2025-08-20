@@ -23,16 +23,16 @@ impl From<Box<dyn std::error::Error>> for DownloadError {
 }
 
 /// rDownloader 的高级公共 API。
-/// 
+///
 /// 封装了所有内部逻辑，提供一个简单的函数来启动下载。
-/// 
+///
 /// # 参数
 /// * `url`: 要下载的文件的 URL。
 /// * `output`: 一个可选的输出路径。可以是目录，也可以是完整的文件路径。
 ///           如果为 `None`，则下载到当前工作目录。
 pub async fn download(url: &str, output: Option<String>) -> Result<(), DownloadError> {
     let client = Client::new();
-    
+
     // 将 Option<String> 转换为 Option<PathBuf>
     let output_path_buf = output.map(PathBuf::from);
 
