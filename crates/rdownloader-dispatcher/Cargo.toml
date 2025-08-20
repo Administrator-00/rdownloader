@@ -1,0 +1,12 @@
+[package]
+name = "rdownloader-dispatcher"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+rdownloader-http = { path = "../rdownloader-http" }
+rdownloader-utils = { path = "../rdownloader-utils" } # 添加 utils 依赖
+reqwest = { workspace = true }
+tokio = { workspace = true }
+indicatif = { workspace = true }
+regex = { workspace = true }

@@ -1,0 +1,17 @@
+[workspace]
+members = ["crates/rdownloader-cli", "crates/rdownloader-http", "crates/rdownloader-dispatcher", "crates/rdownloader-utils"]
+resolver = "2"
+
+[workspace.dependencies]
+bytes = "1"
+clap = { version = "4.0", features = ["derive"] }
+futures-util = "0.3"
+indicatif = "0.17.7"
+reqwest = { version = "0.12.2", features = ["json", "stream"] }
+tokio = { version = "1", features = ["full"] }
+regex = "1"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+log = "0.4"
+log4rs = "1.2.0" # 添加 log4rs
+serde_yaml = "0.9" # log4rs 需要的依赖

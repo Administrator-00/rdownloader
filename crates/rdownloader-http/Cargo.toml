@@ -1,0 +1,15 @@
+[package]
+name = "rdownloader-http"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bytes = { workspace = true }
+futures-util = { workspace = true }
+indicatif = { workspace = true }
+reqwest = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+rdownloader-utils = { path = "../rdownloader-utils" }
+log = { workspace = true }                            # 添加 log

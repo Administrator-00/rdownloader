@@ -1,0 +1,11 @@
+[package]
+name = "rdownloader-utils"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+reqwest = { workspace = true }
+tokio = { workspace = true }
+regex = { workspace = true }
+serde = { workspace = true }      # For future use if needed
+serde_json = { workspace = true } # For future use if needed

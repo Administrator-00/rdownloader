@@ -1,0 +1,25 @@
+# 默认的 log4rs 配置文件
+
+# 定义一个名为 "file" 的 appender，它负责将日志写入文件
+appenders:
+  file:
+    kind: file
+    path: "rdownloader.log" # 日志文件名
+    encoder:
+      # 日志条目的格式
+      pattern: "{d(%Y-%m-%d %H:%M:%S%.3f)} - {h({l})} - {M} - {m}{n}"
+
+# 全局日志配置
+root:
+  level: info # 默认记录 info 及以上级别的日志
+  appenders:
+    - file
+
+# 为特定库配置更详细的日志级别
+loggers:
+  # 将 reqwest 库的日志级别设为 debug，以查看详细的网络交互
+  reqwest:
+    level: debug
+    appenders:
+      - file
+    additive: false # 日志只发送到此 appender，不冒泡给 root

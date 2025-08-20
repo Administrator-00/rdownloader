@@ -1,0 +1,13 @@
+[package]
+name = "rdownloader-cli"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+rdownloader-dispatcher = { path = "../rdownloader-dispatcher" }
+rdownloader-utils = { path = "../rdownloader-utils" }
+tokio = { workspace = true }
+clap = { workspace = true }
+reqwest = { workspace = true }
+log = { workspace = true }
+log4rs = { workspace = true }                                   # 添加 log4rs
