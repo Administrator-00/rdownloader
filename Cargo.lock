@@ -1136,12 +1136,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "rdownloader"
+version = "0.1.0"
+dependencies = [
+ "log",
+ "rdownloader-dispatcher",
+ "rdownloader-utils",
+ "reqwest",
+ "tokio",
+]
+
+[[package]]
 name = "rdownloader-cli"
 version = "0.1.0"
 dependencies = [
  "clap",
  "log",
  "log4rs",
+ "rdownloader",
  "rdownloader-dispatcher",
  "rdownloader-utils",
  "reqwest",
@@ -1182,7 +1194,6 @@ dependencies = [
  "regex",
  "reqwest",
  "serde",
- "serde_json",
  "tokio",
 ]
 

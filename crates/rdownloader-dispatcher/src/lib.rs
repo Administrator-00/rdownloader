@@ -1,7 +1,8 @@
-use rdownloader_http::{download_multipart, download_sequential};
-use rdownloader_utils::http_utils::parse_content_range;
-use reqwest::header::{ACCEPT_RANGES, CONTENT_LENGTH, CONTENT_RANGE, CONTENT_TYPE, ETAG};
+use reqwest::header::{ACCEPT_RANGES, CONTENT_LENGTH, CONTENT_RANGE, ETAG, CONTENT_TYPE};
 use reqwest::Client;
+use rdownloader_http::{download_multipart, download_sequential};
+// 修正导入路径，直接从 rdownloader_utils 导入
+use rdownloader_utils::parse_content_range;
 use std::path::Path;
 use std::time::Duration;
 
@@ -15,20 +16,8 @@ pub enum DispatchError {
     DownloadFailed(String),
 }
 
-impl From<rdownloader_http::DownloadError> for DispatchError {
-    fn from(err: rdownloader_http::DownloadError) -> Self {
-        DispatchError::Http(err)
-    }
-}
-impl From<reqwest::Error> for DispatchError {
-    fn from(err: reqwest::Error) -> Self {
-        if err.is_builder() {
-            DispatchError::BuildError(err)
-        } else {
-            DispatchError::Network(err)
-        }
-    }
-}
+impl From<rdownloader_http::DownloadError> for DispatchError { fn from(err: rdownloader_http::DownloadError) -> Self { DispatchError::Http(err) } }
+impl From<reqwest::Error> for DispatchError { fn from(err: reqwest::Error) -> Self { if err.is_builder() { DispatchError::BuildError(err) } else { DispatchError::Network(err) } } }
 
 const MIN_SIZE_FOR_MULTIPART: u64 = 1 * 1024 * 1024; // 1MB
 const MAX_RETRIES: u32 = 3;
@@ -50,35 +39,19 @@ pub async fn dispatch(client: &Client, url: &str, path: &Path) -> Result<(), Dis
         if probe_res.status().is_success() || probe_res.status() == 206 {
             let headers = probe_res.headers();
             // 提取 ETag 用于后续的文件一致性校验
-            let etag = headers
-                .get(ETAG)
-                .and_then(|v| v.to_str().ok())
-                .map(|s| s.to_string());
+            let etag = headers.get(ETAG).and_then(|v| v.to_str().ok()).map(|s| s.to_string());
             // 提取 Content-Type 用于后续数据块的内容校验，防止静默的 HTML 错误页面
-            let content_type = headers
-                .get(CONTENT_TYPE)
-                .and_then(|v| v.to_str().ok())
-                .map(|s| s.to_string());
+            let content_type = headers.get(CONTENT_TYPE).and_then(|v| v.to_str().ok()).map(|s| s.to_string());
 
             // 优先通过 Content-Range 判断，这是最可靠的方式
             if let Some(range_str) = headers.get(CONTENT_RANGE).and_then(|v| v.to_str().ok()) {
                 if let Some(size) = parse_content_range(range_str) {
                     if size > MIN_SIZE_FOR_MULTIPART {
                         println!("探测成功 (Content-Range): 文件较大，启动多线程模式。");
-                        return Ok(
-                            download_multipart(client, url, path, size, etag, content_type).await?,
-                        );
+                        return Ok(download_multipart(client, url, path, size, etag, content_type).await?);
                     } else {
                         println!("将使用单线程模式 (文件较小)。");
-                        return Ok(download_sequential(
-                            client,
-                            url,
-                            path,
-                            Some(size),
-                            etag,
-                            content_type,
-                        )
-                        .await?);
+                        return Ok(download_sequential(client, url, path, Some(size), etag, content_type).await?);
                     }
                 }
             }
@@ -86,39 +59,26 @@ pub async fn dispatch(client: &Client, url: &str, path: &Path) -> Result<(), Dis
             // 如果 Content-Range 不可用，则回退到 Content-Length + Accept-Ranges 的组合
             if let Some(size_str) = headers.get(CONTENT_LENGTH).and_then(|v| v.to_str().ok()) {
                 if let Ok(size) = size_str.parse::<u64>() {
-                    if headers.get(ACCEPT_RANGES).map_or(false, |v| v == "bytes")
-                        && size > MIN_SIZE_FOR_MULTIPART
-                    {
-                        println!(
-                            "探测成功 (Content-Length): 文件较大且服务器支持并发，启动多线程模式。"
-                        );
-                        return Ok(
-                            download_multipart(client, url, path, size, etag, content_type).await?,
-                        );
+                    if headers.get(ACCEPT_RANGES).map_or(false, |v| v == "bytes") && size > MIN_SIZE_FOR_MULTIPART {
+                        println!("探测成功 (Content-Length): 文件较大且服务器支持并发，启动多线程模式。");
+                        return Ok(download_multipart(client, url, path, size, etag, content_type).await?);
                     } else {
                         println!("将使用单线程模式 (服务器不支持并发或文件较小)。");
-                        return Ok(download_sequential(
-                            client,
-                            url,
-                            path,
-                            Some(size),
-                            etag,
-                            content_type,
-                        )
-                        .await?);
+                        return Ok(download_sequential(client, url, path, Some(size), etag, content_type).await?);
                     }
                 }
             }
-
+            
             // --- 降级处理 ---
             // 如果以上所有方法都无法确定文件大小，则降级到不支持断点续传的单线程流式下载。
             println!("警告: 无法从服务器响应头中确定文件总大小。");
             return Ok(download_sequential(client, url, path, None, etag, content_type).await?);
+
         } else {
             // 如果服务器返回明确的错误，记录下来
             last_error = Some(DispatchError::HttpError(probe_res.status()));
         }
-
+        
         // 如果还未到最大重试次数，则等待一段时间后重试
         if attempt < MAX_RETRIES {
             println!("探测失败，{} 秒后重试...", attempt);

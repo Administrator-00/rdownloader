@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/rdownloader-cli", "crates/rdownloader-http", "crates/rdownloader-dispatcher", "crates/rdownloader-utils"]
+members = ["crates/rdownloader-cli", "crates/rdownloader-http", "crates/rdownloader-dispatcher", "crates/rdownloader-utils", "crates/rdownloader"]
 resolver = "2"
 
 [workspace.dependencies]
@@ -13,5 +13,5 @@ regex = "1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 log = "0.4"
-log4rs = "1.2.0" # 添加 log4rs
-serde_yaml = "0.9" # log4rs 需要的依赖
+log4rs = "1.2.0"
+serde_yaml = "0.9"

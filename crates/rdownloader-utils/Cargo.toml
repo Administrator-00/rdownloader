@@ -1,11 +1,10 @@
 [package]
 name = "rdownloader-utils"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [dependencies]
+regex = { workspace = true }
 reqwest = { workspace = true }
 tokio = { workspace = true }
-regex = { workspace = true }
-serde = { workspace = true }      # For future use if needed
-serde_json = { workspace = true } # For future use if needed
+serde = { workspace = true, features = ["derive"] } # 新增 serde 依赖

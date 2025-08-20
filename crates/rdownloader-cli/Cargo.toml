@@ -1,13 +1,14 @@
 [package]
 name = "rdownloader-cli"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [dependencies]
+rdownloader = { path = "../rdownloader" } # 新增对 rdownloader 门面库的依赖
 rdownloader-dispatcher = { path = "../rdownloader-dispatcher" }
 rdownloader-utils = { path = "../rdownloader-utils" }
 tokio = { workspace = true }
 clap = { workspace = true }
 reqwest = { workspace = true }
 log = { workspace = true }
-log4rs = { workspace = true }                                   # 添加 log4rs
+log4rs = { workspace = true }

@@ -1,0 +1,11 @@
+[package]
+name = "rdownloader"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rdownloader-dispatcher = { path = "../rdownloader-dispatcher" }
+rdownloader-utils = { path = "../rdownloader-utils" }
+reqwest = { workspace = true }
+tokio = { workspace = true }
+log = { workspace = true }

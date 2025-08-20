@@ -10,8 +10,8 @@ use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use rdownloader_utils::chunk_utils::{create_chunks, ChunkState};
-use rdownloader_utils::path_utils::get_state_path;
+// 修正导入路径，直接从 rdownloader_utils 导入
+use rdownloader_utils::{create_chunks, ChunkState, get_state_path};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct DownloadState {
@@ -33,26 +33,10 @@ pub enum DownloadError {
     ContentTypeMismatch, // 当数据块的 Content-Type 与期望不符时返回
 }
 
-impl From<serde_json::Error> for DownloadError {
-    fn from(err: serde_json::Error) -> Self {
-        DownloadError::JsonError(err)
-    }
-}
-impl From<reqwest::Error> for DownloadError {
-    fn from(err: reqwest::Error) -> Self {
-        DownloadError::NetworkError(err)
-    }
-}
-impl From<std::io::Error> for DownloadError {
-    fn from(err: std::io::Error) -> Self {
-        DownloadError::FileError(err)
-    }
-}
-impl From<tokio::task::JoinError> for DownloadError {
-    fn from(err: tokio::task::JoinError) -> Self {
-        DownloadError::SpawnError(err)
-    }
-}
+impl From<serde_json::Error> for DownloadError { fn from(err: serde_json::Error) -> Self { DownloadError::JsonError(err) } }
+impl From<reqwest::Error> for DownloadError { fn from(err: reqwest::Error) -> Self { DownloadError::NetworkError(err) } }
+impl From<std::io::Error> for DownloadError { fn from(err: std::io::Error) -> Self { DownloadError::FileError(err) } }
+impl From<tokio::task::JoinError> for DownloadError { fn from(err: tokio::task::JoinError) -> Self { DownloadError::SpawnError(err) } }
 
 pub async fn download_multipart(
     client: &Client,
@@ -86,13 +70,7 @@ pub async fn download_sequential(
         }
 
         let pb = ProgressBar::new_spinner();
-        pb.set_style(
-            ProgressStyle::default_spinner()
-                .template(
-                    "{spinner:.green} [{elapsed_precise}] {bytes_per_sec} - {bytes} downloaded",
-                )
-                .unwrap(),
-        );
+        pb.set_style(ProgressStyle::default_spinner().template("{spinner:.green} [{elapsed_precise}] {bytes_per_sec} - {bytes} downloaded").unwrap());
         pb.enable_steady_tick(Duration::from_millis(100));
 
         let mut file = File::create(path)?;
@@ -129,23 +107,14 @@ async fn run_download(
         state = serde_json::from_str(&contents)?;
         // 核心校验：如果文件大小、URL或ETag任意一个不匹配，则判定为无效状态，从头开始。
         if state.total_size != total_size || &state.url != url || state.etag != current_etag {
-            if state_path.exists() {
-                std::fs::remove_file(&state_path)?;
-            }
-            if path.exists() {
-                std::fs::remove_file(&path)?;
-            }
+            if state_path.exists() { std::fs::remove_file(&state_path)?; }
+            if path.exists() { std::fs::remove_file(&path)?; }
             let chunks = create_chunks(total_size, is_multipart);
-            state = DownloadState {
-                total_size,
-                chunks,
-                url: url.to_string(),
-                etag: current_etag,
-            };
+            state = DownloadState { total_size, chunks, url: url.to_string(), etag: current_etag };
             let file = File::create(&path)?;
             file.set_len(total_size)?;
         } else {
-            for chunk in &state.chunks {
+             for chunk in &state.chunks {
                 if chunk.completed {
                     completed_bytes += chunk.end - chunk.start + 1;
                 }
@@ -153,12 +122,7 @@ async fn run_download(
         }
     } else {
         let chunks = create_chunks(total_size, is_multipart);
-        state = DownloadState {
-            total_size,
-            chunks,
-            url: url.to_string(),
-            etag: current_etag,
-        };
+        state = DownloadState { total_size, chunks, url: url.to_string(), etag: current_etag };
         let file = File::create(&path)?;
         // 预分配文件大小，避免后续多线程写入时频繁调整文件大小
         file.set_len(total_size)?;
@@ -184,12 +148,8 @@ async fn run_download(
 
             tokio::spawn(async move {
                 let range_header = format!("bytes={}-{}", chunk.start, chunk.end);
-                let res = client
-                    .get(&url)
-                    .header("Range", range_header)
-                    .send()
-                    .await?;
-
+                let res = client.get(&url).header("Range", range_header).send().await?;
+                
                 // 必须是 206 Partial Content (多线程) 或 200 OK (单线程) 才是有效响应
                 if res.status() != 206 && res.status() != 200 {
                     return Err(DownloadError::HttpError(res.status()));
@@ -198,11 +158,7 @@ async fn run_download(
                 // --- 内容校验 ---
                 // 检查每个块的 Content-Type 是否与探测时获得的一致。
                 // 这是为了防止服务器返回 206 状态码但响应体是 HTML 错误页面的情况。
-                let chunk_content_type = res
-                    .headers()
-                    .get(CONTENT_TYPE)
-                    .and_then(|v| v.to_str().ok())
-                    .map(|s| s.to_string());
+                let chunk_content_type = res.headers().get(CONTENT_TYPE).and_then(|v| v.to_str().ok()).map(|s| s.to_string());
                 if chunk_content_type != expected_content_type {
                     return Err(DownloadError::ContentTypeMismatch);
                 }
